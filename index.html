@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MIL-Ticker</title>
+<style>
+  *{box-sizing:border-box} :root{--bg:#0b0f14;--panel:#121821;--text:#e6edf3;--muted:#8a96a3;--up:#25b45b;--down:#ff5c5c}
+  body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 system-ui,Segoe UI,Roboto}
+  header{display:flex;align-items:center;gap:.6rem;padding:1rem;border-bottom:1px solid #1d2430}
+  .ticker-wrap{overflow:hidden;white-space:nowrap;border-bottom:1px solid #1d2430;background:#0d131b}
+  .ticker{display:inline-block;white-space:nowrap;padding:.6rem 0;animation:marquee 40s linear infinite}
+  .ticker:hover{animation-play-state:paused;cursor:ew-resize}
+  @keyframes marquee{0%{transform:translateX(100%)}100%{transform:translateX(-100%)}}
+  .titem{display:inline-flex;gap:.5rem;align-items:center;padding:0 .9rem;border-right:1px solid #1b2330}
+  .tname{color:var(--muted);font-weight:600}
+  .tpct.up{color:var(--up)} .tpct.down{color:var(--down)}
+  main{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;padding:1rem;max-width:1100px;margin:0 auto}
+  section{background:var(--panel);border:1px solid #1d2430;border-radius:14px;padding:1rem}
+  h2{margin:.2rem 0 .6rem 0;font-size:1rem;color:#c8d2de}
+  ul{list-style:none;margin:0;padding:0;display:grid;gap:.4rem}
+  li{display:flex;justify-content:space-between;gap:.75rem;padding:.5rem .6rem;background:#0e141d;border:1px solid #1b2330;border-radius:10px}
+  small{color:var(--muted)}
+</style>
+</head>
+<body>
+<header><h1 style="margin:0">MIL-Ticker</h1><small>— MVP</small></header>
+<div class="ticker-wrap"><div class="ticker" id="ticker"></div></div>
+
+<main>
+  <section>
+    <h2>New Contracts</h2>
+    <ul id="contracts"></ul>
+  </section>
+  <section>
+    <h2>Commodity Moves</h2>
+    <ul id="commodities"></ul>
+  </section>
+  <section>
+    <h2>Conflict Watch</h2>
+    <ul id="conflicts"></ul>
+  </section>
+</main>
+
+<script>
+const data = {
+  commodities: [
+    { name:"WTI", price:83.12, pct: 1.2 },
+    { name:"Brent", price:86.47, pct:-0.6 },
+    { name:"HRC Steel", price:830.00, pct:0.9 }
+  ],
+  contracts: [
+    { entity:"Raytheon", value_usd:220000000, note:"Patriot spares IDIQ" },
+    { entity:"Lockheed Martin", value_usd:540000000, note:"JASSM production lot" },
+    { entity:"BAE Systems", value_usd:150000000, note:"Armored vehicle upgrades" }
+  ],
+  conflicts: [
+    { name:"Black Sea", note:"Drone strike uptick" },
+    { name:"Red Sea", note:"Shipping insurance premia rising" },
+    { name:"Taiwan Strait", note:"Increased ADIZ incursions" }
+  ]
+};
+
+function money(n){return n.toLocaleString(undefined,{style:'currency',currency:'USD',maximumFractionDigits:0})}
+
+function renderTicker(d){
+  const el = document.getElementById('ticker'); const parts = [];
+  d.commodities.forEach(c=>{
+    const dir = c.pct>=0 ? 'up':'down';
+    parts.push(`<span class="titem"><span class="tname">${c.name}</span><span>$${c.price.toFixed(2)}</span><span class="tpct ${dir}">${c.pct>0?'▲':'▼'}${Math.abs(c.pct).toFixed(2)}%</span></span>`);
+  });
+  d.contracts.forEach(ct=>{
+    parts.push(`<span class="titem"><span class="tname">${ct.entity}</span><span>${money(ct.value_usd)}</span><small>${ct.note||''}</small></span>`);
+  });
+  d.conflicts.forEach(cf=>{
+    parts.push(`<span class="titem"><span class="tname">${cf.name}</span><small>${cf.note||''}</small></span>`);
+  });
+  el.innerHTML = parts.join('') + parts.join(''); // duplicate for continuous scroll
+}
+function renderLists(d){
+  const mk=(arr,map,id)=>{const ul=document.getElementById(id); ul.innerHTML=''; arr.forEach(x=>{const li=document.createElement('li'); li.innerHTML=map(x); ul.appendChild(li);});};
+  mk(d.contracts, x=>`<span>${x.entity}</span><span>${money(x.value_usd)}</span>`, 'contracts');
+  mk(d.commodities, x=>`<span>${x.name}</span><span class="tpct ${x.pct>=0?'up':'down'}">${x.pct>0?'▲':'▼'}${Math.abs(x.pct).toFixed(2)}%</span>`, 'commodities');
+  mk(d.conflicts, x=>`<span>${x.name}</span><small>${x.note||''}</small>`, 'conflicts');
+}
+renderTicker(data); renderLists(data);
+</script>
+</body>
+</html>
