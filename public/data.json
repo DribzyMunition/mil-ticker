@@ -1,0 +1,17 @@
+{
+  "commodities": [
+    { "name": "WTI", "price": 83.12, "pct": 1.2 },
+    { "name": "Brent", "price": 86.47, "pct": -0.6 },
+    { "name": "HRC Steel", "price": 830.00, "pct": 0.9 }
+  ],
+  "contracts": [
+    { "entity": "Raytheon", "value_usd": 220000000, "note": "Patriot spares IDIQ" },
+    { "entity": "Lockheed Martin", "value_usd": 540000000, "note": "JASSM production lot" },
+    { "entity": "BAE Systems", "value_usd": 150000000, "note": "Armored vehicle upgrades" }
+  ],
+  "conflicts": [
+    { "name": "Black Sea", "note": "Drone strike uptick" },
+    { "name": "Red Sea", "note": "Shipping insurance premia rising" },
+    { "name": "Taiwan Strait", "note": "Increased ADIZ incursions" }
+  ]
+}
