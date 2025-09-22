@@ -75,7 +75,31 @@ function renderLists(d){
 
 load();
 setInterval(load, 60000);
+
+ 
+function money(n){return n.toLocaleString(undefined,{style:'currency',currency:'USD',maximumFractionDigits:0})}
+
+function fmtTime(t){
+  // accepts UNIX seconds or ISO string
+  let d = (typeof t === 'number') ? new Date(t*1000) : new Date(t);
+  if (isNaN(d)) d = new Date();
+  return d.toLocaleString(undefined, { hour12:false });
+}
+
+async function load(){
+  const res = await fetch('public/data.json?ts=' + Date.now());
+  const data = await res.json();
+  document.getElementById('updated').textContent = 'Last updated: ' + fmtTime(data.generated_at || Date.now()/1000);
+  renderTicker(data);
+  renderLists(data);
+}
+...
 </script>
+
+ <footer style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-top:1px solid #1d2430;color:#8a96a3">
+  <span id="updated"></span>
+  <a href="public/data.json" style="text-decoration:none;color:#4da3ff">view data.json</a>
+</footer>
 
 </body>
 </html>
