@@ -13,11 +13,6 @@
     { "name": "Black Sea", "note": "Drone strike uptick" },
     { "name": "Red Sea", "note": "Shipping insurance premia rising" },
     { "name": "Taiwan Strait", "note": "Increased ADIZ incursions" }
-  ]
-}
-{
-  "commodities": [ ... ],
-  "contracts": [ ... ],
-  "conflicts": [ ... ],
+  ],
   "generated_at": 1737657600
 }
