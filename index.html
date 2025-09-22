@@ -24,6 +24,12 @@
   .err{display:none;padding:.6rem .9rem;background:#2a1111;border-bottom:1px solid #512020;color:#ffbdbd}
   footer{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-top:1px solid #1d2430;color:#8a96a3}
   a{color:#4da3ff;text-decoration:none} a:hover{text-decoration:underline}
+ .tpct.big { 
+  font-weight: bold; 
+  color: #ffcf40; /* bright amber */
+  text-shadow: 0 0 4px #ffcf40;
+}
+
 </style>
 </head>
 <body>
@@ -84,35 +90,49 @@ async function load(){
 }
 
 function renderTicker(d){
-  const el = document.getElementById('ticker'); const parts = [];
-  (d.commodities||[]).forEach(c=>{
-    const dir = (Number(c.pct)||0) >= 0 ? 'up' : 'down';
-    parts.push(
-      `<span class="titem"><span class="tname">${c.name}</span>`+
-      `<span>$${Number(c.price).toFixed(2)}</span>`+
-      `<span class="tpct ${dir}">${(Number(c.pct)||0)>0?'▲':'▼'}${Math.abs(Number(c.pct)||0).toFixed(2)}%</span></span>`
-    );
-  });
-  (d.contracts||[]).forEach(ct=>{
-    parts.push(
-      `<span class="titem"><span class="tname">${ct.entity}</span>`+
-      `<span>${money(ct.value_usd)}</span>`+
-      `<small>${ct.note||''}</small></span>`
-    );
-  });
+  const el = document.getElementById('ticker'); 
+  const parts = [];
+
+  // Commodities: sort by absolute % move
+  [...(d.commodities||[])]
+    .sort((a,b)=>Math.abs(b.pct)-Math.abs(a.pct))
+    .forEach(c=>{
+      const dir = (Number(c.pct)||0) >= 0 ? 'up' : 'down';
+      parts.push(
+        `<span class="titem"><span class="tname">${c.name}</span>`+
+        `<span>$${Number(c.price).toFixed(2)}</span>`+
+        `<span class="tpct ${dir} ${Math.abs(c.pct)>=2?'big':''}">${c.pct>0?'▲':'▼'}${Math.abs(c.pct).toFixed(2)}%</span>`
+      );
+    });
+
+  // Contracts: sort by descending value
+  [...(d.contracts||[])]
+    .sort((a,b)=>b.value_usd - a.value_usd)
+    .forEach(ct=>{
+      parts.push(
+        `<span class="titem"><span class="tname">${ct.entity}</span>`+
+        `<span>${money(ct.value_usd)}</span>`+
+        `<small>${ct.note||''}</small></span>`
+      );
+    });
+
+  // Conflicts: leave order
   (d.conflicts||[]).forEach(cf=>{
     parts.push(`<span class="titem"><span class="tname">${cf.name}</span><small>${cf.note||''}</small></span>`);
   });
-  el.innerHTML = parts.join('') + parts.join(''); // duplicate for continuous scroll
+
+  el.innerHTML = parts.join('') + parts.join(); // duplicate for continuous scroll
 }
+
 
 function renderLists(d){
   const mk=(arr,map,id)=>{const ul=document.getElementById(id); ul.innerHTML=''; (arr||[]).forEach(x=>{const li=document.createElement('li'); li.innerHTML=map(x); ul.appendChild(li);});};
   mk(d.contracts, x=>`<span>${x.entity}</span><span>${money(x.value_usd)}</span>`, 'contracts');
-  mk(d.commodities, x=>{
-    const pct = Number(x.pct)||0, dir = pct>=0?'up':'down';
-    return `<span>${x.name}</span><span class="tpct ${dir}">${pct>0?'▲':'▼'}${Math.abs(pct).toFixed(2)}%</span>`;
-  }, 'commodities');
+ mk(d.commodities, x=>{
+  const pct = Number(x.pct)||0, dir = pct>=0?'up':'down';
+  return `<span>${x.name}</span>`+
+         `<span class="tpct ${dir} ${Math.abs(pct)>=2?'big':''}">${pct>0?'▲':'▼'}${Math.abs(pct).toFixed(2)}%</span>`;
+}, 'commodities');
   mk(d.conflicts, x=>`<span>${x.name}</span><small>${x.note||''}</small>`, 'conflicts');
 }
 
