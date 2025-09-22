@@ -42,47 +42,40 @@
 </main>
 
 <script>
-const data = {
-  commodities: [
-    { name:"WTI", price:83.12, pct: 1.2 },
-    { name:"Brent", price:86.47, pct:-0.6 },
-    { name:"HRC Steel", price:830.00, pct:0.9 }
-  ],
-  contracts: [
-    { entity:"Raytheon", value_usd:220000000, note:"Patriot spares IDIQ" },
-    { entity:"Lockheed Martin", value_usd:540000000, note:"JASSM production lot" },
-    { entity:"BAE Systems", value_usd:150000000, note:"Armored vehicle upgrades" }
-  ],
-  conflicts: [
-    { name:"Black Sea", note:"Drone strike uptick" },
-    { name:"Red Sea", note:"Shipping insurance premia rising" },
-    { name:"Taiwan Strait", note:"Increased ADIZ incursions" }
-  ]
-};
-
 function money(n){return n.toLocaleString(undefined,{style:'currency',currency:'USD',maximumFractionDigits:0})}
+
+async function load(){
+  const res = await fetch('public/data.json?ts=' + Date.now());
+  const data = await res.json();
+  renderTicker(data);
+  renderLists(data);
+}
 
 function renderTicker(d){
   const el = document.getElementById('ticker'); const parts = [];
-  d.commodities.forEach(c=>{
+  (d.commodities||[]).forEach(c=>{
     const dir = c.pct>=0 ? 'up':'down';
-    parts.push(`<span class="titem"><span class="tname">${c.name}</span><span>$${c.price.toFixed(2)}</span><span class="tpct ${dir}">${c.pct>0?'▲':'▼'}${Math.abs(c.pct).toFixed(2)}%</span></span>`);
+    parts.push(`<span class="titem"><span class="tname">${c.name}</span><span>$${Number(c.price).toFixed(2)}</span><span class="tpct ${dir}">${c.pct>0?'▲':'▼'}${Math.abs(c.pct).toFixed(2)}%</span></span>`);
   });
-  d.contracts.forEach(ct=>{
+  (d.contracts||[]).forEach(ct=>{
     parts.push(`<span class="titem"><span class="tname">${ct.entity}</span><span>${money(ct.value_usd)}</span><small>${ct.note||''}</small></span>`);
   });
-  d.conflicts.forEach(cf=>{
+  (d.conflicts||[]).forEach(cf=>{
     parts.push(`<span class="titem"><span class="tname">${cf.name}</span><small>${cf.note||''}</small></span>`);
   });
-  el.innerHTML = parts.join('') + parts.join(''); // duplicate for continuous scroll
+  el.innerHTML = parts.join('') + parts.join('');
 }
+
 function renderLists(d){
-  const mk=(arr,map,id)=>{const ul=document.getElementById(id); ul.innerHTML=''; arr.forEach(x=>{const li=document.createElement('li'); li.innerHTML=map(x); ul.appendChild(li);});};
+  const mk=(arr,map,id)=>{const ul=document.getElementById(id); ul.innerHTML=''; (arr||[]).forEach(x=>{const li=document.createElement('li'); li.innerHTML=map(x); ul.appendChild(li);});};
   mk(d.contracts, x=>`<span>${x.entity}</span><span>${money(x.value_usd)}</span>`, 'contracts');
   mk(d.commodities, x=>`<span>${x.name}</span><span class="tpct ${x.pct>=0?'up':'down'}">${x.pct>0?'▲':'▼'}${Math.abs(x.pct).toFixed(2)}%</span>`, 'commodities');
   mk(d.conflicts, x=>`<span>${x.name}</span><small>${x.note||''}</small>`, 'conflicts');
 }
-renderTicker(data); renderLists(data);
+
+load();
+setInterval(load, 60000);
 </script>
+
 </body>
 </html>
