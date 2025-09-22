@@ -2,7 +2,7 @@
   "commodities": [
     { "name": "WTI", "price": 83.12, "pct": 1.2 },
     { "name": "Brent", "price": 86.47, "pct": -0.6 },
-    { "name": "HRC Steel", "price": 830.00, "pct": 0.9 }
+    { "name": "HRC Steel", "price": 830.00, "pct": 2.9 }
   ],
   "contracts": [
     { "entity": "Raytheon", "value_usd": 220000000, "note": "Patriot spares IDIQ" },
