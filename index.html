@@ -13,32 +13,30 @@
     --up:#25b45b;
     --down:#ff5c5c
   }
-/* starfield overlay */
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  background: transparent;
-  pointer-events: none;
-  z-index: 0;
-}
 
-.star {
-  position: fixed;
-  background: white;
-  border-radius: 50%;
-  opacity: 0.8;
-  animation: twinkle 6s infinite alternate;
-  z-index: 0;
-}
+  /* starfield overlay */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: transparent;
+    pointer-events: none;
+    z-index: 0;
+  }
 
-@keyframes twinkle {
-  from { opacity: 0.2; }
-  to   { opacity: 0.9; }
-}
+  .star {
+    position: fixed;
+    background: white;
+    border-radius: 50%;
+    opacity: 0.8;
+    animation: twinkle 6s infinite alternate;
+    z-index: 0;
+  }
 
-
-
+  @keyframes twinkle {
+    from { opacity: 0.2; }
+    to   { opacity: 0.9; }
+  }
 
   header{
     display:flex;
@@ -135,11 +133,8 @@ body::before {
   }
   #updated{ color: var(--muted); font-size:.9rem }
 </style>
-
-
-
-
 </head>
+
 <body>
 <header><h1 style="margin:0">MIL-Ticker</h1><small>— MVP</small></header>
 <div id="err" class="err"></div>
@@ -163,9 +158,6 @@ body::before {
     <ul id="conflicts"></ul>
   </section>
 
-  <!-- Divider line & gap -->
-  <div class="tier-divider"></div>
- 
   <!-- Divider with timestamp (between tiers) -->
   <div class="tier-divider">
     <span id="updated"></span>
@@ -177,20 +169,6 @@ body::before {
     <ul id="apparel"></ul>
   </section>
 </main>
-
-  <!-- Tier 2: extended boxes -->
-  <section>
-    <h2>Clothing</h2>
-    <ul id="apparel"></ul>
-  </section>
-</main>
-
-
-
-<footer>
-  <span id="updated"></span>
-  <a href="public/data.json" target="_blank" rel="noopener">view data.json</a>
-</footer>
 
 <script>
 function money(n){return Number(n).toLocaleString(undefined,{style:'currency',currency:'USD',maximumFractionDigits:0})}
@@ -262,17 +240,19 @@ function renderTicker(d){
 function renderLists(d){
   const mk=(arr,map,id)=>{const ul=document.getElementById(id); ul.innerHTML=''; (arr||[]).forEach(x=>{const li=document.createElement('li'); li.innerHTML=map(x); ul.appendChild(li);});};
   mk(d.contracts, x=>`<span>${x.entity}</span><span>${money(x.value_usd)}</span>`, 'contracts');
- mk(d.commodities, x=>{
-  const pct = Number(x.pct)||0, dir = pct>=0?'up':'down';
-  return `<span>${x.name}</span>`+
-         `<span class="tpct ${dir} ${Math.abs(pct)>=2?'big':''}">${pct>0?'▲':'▼'}${Math.abs(pct).toFixed(2)}%</span>`;
-}, 'commodities');
+  mk(d.commodities, x=>{
+    const pct = Number(x.pct)||0, dir = pct>=0?'up':'down';
+    return `<span>${x.name}</span>`+
+           `<span class="tpct ${dir} ${Math.abs(pct)>=2?'big':''}">${pct>0?'▲':'▼'}${Math.abs(pct).toFixed(2)}%</span>`;
+  }, 'commodities');
   mk(d.conflicts, x=>`<span>${x.name}</span><small>${x.note||''}</small>`, 'conflicts');
- mk(d.apparel, x=>`<span>${x.brand}</span><small>${x.note||''}</small>`, 'apparel');
+  mk(d.apparel, x=>`<span>${x.brand}</span><small>${x.note||''}</small>`, 'apparel');
 }
 
 document.addEventListener('DOMContentLoaded', load);
 setInterval(load, 60000);
+</script>
+
 <script>
   // generate scattered stars
   for(let i=0; i<60; i++){
