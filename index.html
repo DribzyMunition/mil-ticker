@@ -36,21 +36,7 @@ body::before {
   from { opacity: 0.2; }
   to   { opacity: 0.9; }
 }
- 
-<script>
-  // generate scattered stars
-  for(let i=0; i<60; i++){
-    const star = document.createElement("div");
-    star.className = "star";
-    const size = Math.random()*2 + 1; // 1px to 3px
-    star.style.width = size + "px";
-    star.style.height = size + "px";
-    star.style.left = Math.random()*100 + "vw";
-    star.style.top = Math.random()*100 + "vh";
-    star.style.animationDuration = (3 + Math.random()*5) + "s";
-    document.body.appendChild(star);
-  }
-</script>
+
 
 
 
@@ -287,6 +273,20 @@ function renderLists(d){
 
 document.addEventListener('DOMContentLoaded', load);
 setInterval(load, 60000);
+<script>
+  // generate scattered stars
+  for(let i=0; i<60; i++){
+    const star = document.createElement("div");
+    star.className = "star";
+    const size = Math.random()*2 + 1; // 1px to 3px
+    star.style.width = size + "px";
+    star.style.height = size + "px";
+    star.style.left = Math.random()*100 + "vw";
+    star.style.top = Math.random()*100 + "vh";
+    star.style.animationDuration = (3 + Math.random()*5) + "s";
+    document.body.appendChild(star);
+  }
 </script>
+
 </body>
 </html>
