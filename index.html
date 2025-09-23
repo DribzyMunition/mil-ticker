@@ -60,10 +60,26 @@
   }
   body{
     margin:0;
-    background:var(--bg);
     color:var(--text);
-    font:16px/1.5 system-ui,Segoe UI,Roboto
+    font:16px/1.5 system-ui,Segoe UI,Roboto;
+    background-color:var(--bg);
+    background-image:
+      radial-gradient(1px 1px at 5% 10%, #ffffffcc 50%, transparent 52%),
+      radial-gradient(1.2px 1.2px at 20% 35%, #ffffff88 50%, transparent 52%),
+      radial-gradient(1px 1px at 40% 75%, #ffffff66 50%, transparent 52%),
+      radial-gradient(1.5px 1.5px at 70% 25%, #ffffffaa 50%, transparent 52%),
+      radial-gradient(1px 1px at 85% 60%, #ffffff77 50%, transparent 52%);
+    background-size:300px 300px;
+    background-repeat:repeat;
+    background-attachment:fixed;
+    animation:twinkle 8s infinite alternate ease-in-out;
   }
+  @keyframes twinkle {
+    0%   { opacity: 0.9; }
+    50%  { opacity: 0.6; }
+    100% { opacity: 0.9; }
+  }
+
   header{
     display:flex;
     align-items:center;
@@ -139,65 +155,27 @@
     border-bottom:1px solid #512020;
     color:#ffbdbd
   }
-  footer{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    padding:12px 16px;
-    border-top:1px solid #1d2430;
-    color:#8a96a3
-  }
   a{color:#4da3ff;text-decoration:none}
   a:hover{text-decoration:underline}
 
-/* starry background (tileable, visible in gaps) */
-body {
-  margin: 0;
-  background-color: var(--bg);
-  background-image:
-    radial-gradient(1px 1px at 5% 10%,  #fff 100%, transparent 0),
-    radial-gradient(1px 1px at 15% 30%, #fff 100%, transparent 0),
-    radial-gradient(1.5px 1.5px at 25% 70%, #fff 100%, transparent 0),
-    radial-gradient(1px 1px at 45% 20%, #fff 100%, transparent 0),
-    radial-gradient(2px 2px at 65% 60%, #fff 100%, transparent 0),
-    radial-gradient(1px 1px at 80% 80%, #fff 100%, transparent 0),
-    radial-gradient(1px 1px at 90% 40%, #fff 100%, transparent 0),
-    radial-gradient(1px 1px at 70% 10%, #fff 100%, transparent 0),
-    radial-gradient(1px 1px at 30% 85%, #fff 100%, transparent 0),
-    radial-gradient(2px 2px at 50% 50%, #fff 100%, transparent 0);
-  background-size: 300px 300px;
-  background-repeat: repeat;
-  background-attachment: fixed;
-}
-
-
-  header, .ticker-wrap, main, footer { position:relative; z-index:1 }
-
-  /* spacing before new sections */
-  .section-gap{margin-top:2.5rem}
-
- .tier-divider {
-  grid-column: 1 / -1; /* span full width of grid */
-  border-top: 2px solid #1d2430;
-  margin: 3rem 0 1.5rem 0;
-}
-.tier-divider{
-  grid-column: 1 / -1;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 3rem 0 1.5rem 0;
-}
-.tier-divider::before,
-.tier-divider::after{
-  content:"";
-  height:0;
-  border-top:2px solid #1d2430;
-  flex:1;
-}
-#updated{ color: var(--muted); font-size:.9rem }
-
+  /* Divider between Tier 1 and Tier 2 */
+  .tier-divider{
+    grid-column: 1 / -1;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin:3rem 0 1.5rem 0;
+  }
+  .tier-divider::before,
+  .tier-divider::after{
+    content:"";
+    height:0;
+    border-top:2px solid #1d2430;
+    flex:1;
+  }
+  #updated{ color: var(--muted); font-size:.9rem }
 </style>
+
 
 
 </head>
