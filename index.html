@@ -132,21 +132,20 @@
   a{color:#4da3ff;text-decoration:none}
   a:hover{text-decoration:underline}
 
-  /* starry background */
-  body::before{
-    content:"";
-    position:fixed; inset:0;
-    background:
-      radial-gradient(2px 2px at 20% 30%, #ffffffaa 50%, transparent 52%),
-      radial-gradient(1.5px 1.5px at 70% 60%, #ffffff88 50%, transparent 52%),
-      radial-gradient(1.2px 1.2px at 40% 80%, #ffffff66 50%, transparent 52%),
-      radial-gradient(1.8px 1.8px at 85% 25%, #ffffff99 50%, transparent 52%),
-      radial-gradient(1.2px 1.2px at 10% 70%, #ffffff55 50%, transparent 52%);
-    background-color:transparent;
-    pointer-events:none;
-    z-index:0;
-    opacity:.25
-  }
+/* starry background (tileable, visible in gaps) */
+body{
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(1px 1px at 8% 12%,  #ffffffbb 60%, transparent 61%),
+    radial-gradient(1px 1px at 23% 37%, #ffffff88 60%, transparent 61%),
+    radial-gradient(1px 1px at 41% 73%, #ffffff66 60%, transparent 61%),
+    radial-gradient(1px 1px at 65% 18%, #ffffffaa 60%, transparent 61%),
+    radial-gradient(1px 1px at 78% 56%, #ffffff77 60%, transparent 61%),
+    radial-gradient(1px 1px at 92% 84%, #ffffff99 60%, transparent 61%);
+  background-size: 300px 300px;
+  background-attachment: fixed;
+}
+
   header, .ticker-wrap, main, footer { position:relative; z-index:1 }
 
   /* spacing before new sections */
@@ -157,6 +156,21 @@
   border-top: 2px solid #1d2430;
   margin: 3rem 0 1.5rem 0;
 }
+.tier-divider{
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 3rem 0 1.5rem 0;
+}
+.tier-divider::before,
+.tier-divider::after{
+  content:"";
+  height:0;
+  border-top:2px solid #1d2430;
+  flex:1;
+}
+#updated{ color: var(--muted); font-size:.9rem }
 
 </style>
 
@@ -187,6 +201,18 @@
 
   <!-- Divider line & gap -->
   <div class="tier-divider"></div>
+ 
+  <!-- Divider with timestamp (between tiers) -->
+  <div class="tier-divider">
+    <span id="updated"></span>
+  </div>
+
+  <!-- Tier 2: extended boxes -->
+  <section>
+    <h2>Clothing</h2>
+    <ul id="apparel"></ul>
+  </section>
+</main>
 
   <!-- Tier 2: extended boxes -->
   <section>
