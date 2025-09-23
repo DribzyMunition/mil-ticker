@@ -13,27 +13,46 @@
     --up:#25b45b;
     --down:#ff5c5c
   }
-  body{
-    margin:0;
-    color:var(--text);
-    font:16px/1.5 system-ui,Segoe UI,Roboto;
-    background-color:var(--bg);
-    background-image:
-      radial-gradient(1px 1px at 5% 10%, #ffffffcc 50%, transparent 52%),
-      radial-gradient(1.2px 1.2px at 20% 35%, #ffffff88 50%, transparent 52%),
-      radial-gradient(1px 1px at 40% 75%, #ffffff66 50%, transparent 52%),
-      radial-gradient(1.5px 1.5px at 70% 25%, #ffffffaa 50%, transparent 52%),
-      radial-gradient(1px 1px at 85% 60%, #ffffff77 50%, transparent 52%);
-    background-size:300px 300px;
-    background-repeat:repeat;
-    background-attachment:fixed;
-    animation:twinkle 8s infinite alternate ease-in-out;
+/* starfield overlay */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: transparent;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.star {
+  position: fixed;
+  background: white;
+  border-radius: 50%;
+  opacity: 0.8;
+  animation: twinkle 6s infinite alternate;
+  z-index: 0;
+}
+
+@keyframes twinkle {
+  from { opacity: 0.2; }
+  to   { opacity: 0.9; }
+}
+ 
+<script>
+  // generate scattered stars
+  for(let i=0; i<60; i++){
+    const star = document.createElement("div");
+    star.className = "star";
+    const size = Math.random()*2 + 1; // 1px to 3px
+    star.style.width = size + "px";
+    star.style.height = size + "px";
+    star.style.left = Math.random()*100 + "vw";
+    star.style.top = Math.random()*100 + "vh";
+    star.style.animationDuration = (3 + Math.random()*5) + "s";
+    document.body.appendChild(star);
   }
-  @keyframes twinkle {
-    0%   { opacity: 0.9; }
-    50%  { opacity: 0.6; }
-    100% { opacity: 0.9; }
-  }
+</script>
+
+
 
   header{
     display:flex;
