@@ -166,20 +166,25 @@
     <h2>New Contracts</h2>
     <ul id="contracts"></ul>
   </section>
+
   <section>
     <h2>Commodity Moves</h2>
     <ul id="commodities"></ul>
   </section>
+
   <section>
     <h2>Conflict Watch</h2>
     <ul id="conflicts"></ul>
-  <div class="section-gap"></div>
-<section>
-  <h2>Equipment & Apparel</h2>
-  <ul id="apparel"></ul>
-</section>
+  </section>
 
+  <div class="section-gap"></div>
+
+  <section>
+    <h2>Equipment & Apparel</h2>
+    <ul id="apparel"></ul>
+  </section>
 </main>
+
 
 <footer>
   <span id="updated"></span>
@@ -249,7 +254,7 @@ function renderTicker(d){
     parts.push(`<span class="titem"><span class="tname">${cf.name}</span><small>${cf.note||''}</small></span>`);
   });
 
-  el.innerHTML = parts.join('') + parts.join(); // duplicate for continuous scroll
+  el.innerHTML = parts.join('') + parts.join(''); // duplicate for continuous scroll
 }
 
 
