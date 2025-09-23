@@ -151,6 +151,13 @@
 
   /* spacing before new sections */
   .section-gap{margin-top:2.5rem}
+
+ .tier-divider {
+  grid-column: 1 / -1; /* span full width of grid */
+  border-top: 2px solid #1d2430;
+  margin: 3rem 0 1.5rem 0;
+}
+
 </style>
 
 
@@ -162,6 +169,7 @@
 <div class="ticker-wrap"><div class="ticker" id="ticker"></div></div>
 
 <main>
+  <!-- Tier 1: core boxes -->
   <section>
     <h2>New Contracts</h2>
     <ul id="contracts"></ul>
@@ -177,13 +185,16 @@
     <ul id="conflicts"></ul>
   </section>
 
-  <div class="section-gap"></div>
+  <!-- Divider line & gap -->
+  <div class="tier-divider"></div>
 
+  <!-- Tier 2: extended boxes -->
   <section>
-    <h2>Equipment & Apparel</h2>
+    <h2>Clothing</h2>
     <ul id="apparel"></ul>
   </section>
 </main>
+
 
 
 <footer>
