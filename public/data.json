@@ -15,4 +15,12 @@
     { "name": "Taiwan Strait", "note": "Increased ADIZ incursions" }
   ],
   "generated_at": 1737657600
+  ],
+  "clothing": [
+    { "brand": "Arc'teryx (LEAF)", "note": "Technical shells, load-bearing apparel" },
+    { "brand": "The North Face", "note": "Extreme cold-weather lines; expedition wear" },
+    { "brand": "Crye Precision", "note": "Combat uniforms & plate carriers" },
+    { "brand": "5.11 Tactical", "note": "Duty apparel & gear" }
+  ],
+  "generated_at": 1737657600
 }
