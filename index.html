@@ -72,7 +72,12 @@ header, .ticker-wrap, main, footer { position: relative; z-index: 1; }
   <section>
     <h2>Conflict Watch</h2>
     <ul id="conflicts"></ul>
-  </section>
+  <div class="section-gap"></div>
+<section>
+  <h2>Equipment & Apparel</h2>
+  <ul id="apparel"></ul>
+</section>
+
 </main>
 
 <footer>
@@ -156,6 +161,7 @@ function renderLists(d){
          `<span class="tpct ${dir} ${Math.abs(pct)>=2?'big':''}">${pct>0?'▲':'▼'}${Math.abs(pct).toFixed(2)}%</span>`;
 }, 'commodities');
   mk(d.conflicts, x=>`<span>${x.name}</span><small>${x.note||''}</small>`, 'conflicts');
+ mk(d.apparel, x=>`<span>${x.brand}</span><small>${x.note||''}</small>`, 'apparel');
 }
 
 document.addEventListener('DOMContentLoaded', load);
