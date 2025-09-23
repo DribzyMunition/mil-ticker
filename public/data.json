@@ -2,19 +2,22 @@
   "commodities": [
     { "name": "WTI", "price": 83.12, "pct": 1.2 },
     { "name": "Brent", "price": 86.47, "pct": -0.6 },
-    { "name": "HRC Steel", "price": 830.00, "pct": 2.9 }
+    { "name": "HRC Steel", "price": 830.00, "pct": 0.9 },
+    { "name": "Aluminum", "price": 2421.00, "pct": 0.7 },
+    { "name": "Copper", "price": 4.12, "pct": -1.8 }
   ],
   "contracts": [
-    { "entity": "Raytheon", "value_usd": 220000000, "note": "Patriot spares IDIQ" },
     { "entity": "Lockheed Martin", "value_usd": 540000000, "note": "JASSM production lot" },
-    { "entity": "BAE Systems", "value_usd": 150000000, "note": "Armored vehicle upgrades" }
+    { "entity": "Raytheon", "value_usd": 220000000, "note": "Patriot spares IDIQ" },
+    { "entity": "BAE Systems", "value_usd": 150000000, "note": "Armored vehicle upgrades" },
+    { "entity": "Northrop Grumman", "value_usd": 310000000, "note": "ISR systems support" },
+    { "entity": "General Dynamics", "value_usd": 185000000, "note": "Munitions & components" }
   ],
   "conflicts": [
     { "name": "Black Sea", "note": "Drone strike uptick" },
     { "name": "Red Sea", "note": "Shipping insurance premia rising" },
-    { "name": "Taiwan Strait", "note": "Increased ADIZ incursions" }
-  ],
-  "generated_at": 1737657600
+    { "name": "Taiwan Strait", "note": "Increased ADIZ incursions" },
+    { "name": "Sahel", "note": "Cross-border operations reported" }
   ],
   "apparel": [
     { "brand": "Arc'teryx (LEAF)", "note": "Technical shells, load-bearing apparel" },
