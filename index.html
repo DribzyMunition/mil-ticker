@@ -31,6 +31,28 @@
 }
 
 </style>
+ /* starry background */
+body::before{
+  content:"";
+  position:fixed; inset:0;
+  background:
+    radial-gradient(2px 2px at 20% 30%, #ffffffaa 50%, transparent 52%),
+    radial-gradient(1.5px 1.5px at 70% 60%, #ffffff88 50%, transparent 52%),
+    radial-gradient(1.2px 1.2px at 40% 80%, #ffffff66 50%, transparent 52%),
+    radial-gradient(1.8px 1.8px at 85% 25%, #ffffff99 50%, transparent 52%),
+    radial-gradient(1.2px 1.2px at 10% 70%, #ffffff55 50%, transparent 52%);
+  background-color: transparent;
+  pointer-events:none;
+  z-index:0;
+  opacity: .25; /* subtle */
+}
+
+/* keep content above the background */
+header, .ticker-wrap, main, footer { position: relative; z-index: 1; }
+
+/* section group lower on page */
+.section-gap { margin-top: 2.5rem; }
+
 </head>
 <body>
 <header><h1 style="margin:0">MIL-Ticker</h1><small>— MVP</small></header>
