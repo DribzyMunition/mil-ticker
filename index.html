@@ -263,10 +263,22 @@ function renderLists(d){
   const mk=(arr,map,id)=>{const ul=document.getElementById(id); ul.innerHTML=''; (arr||[]).forEach(x=>{const li=document.createElement('li'); li.innerHTML=map(x); ul.appendChild(li);});};
   mk(d.contracts, x=>`<span>${x.entity}</span><span>${money(x.value_usd)}</span>`, 'contracts');
   mk(d.commodities, x=>{
-    const pct = Number(x.pct)||0, dir = pct>=0?'up':'down';
-    return `<span>${x.name}</span>`+
-           `<span class="tpct ${dir} ${Math.abs(pct)>=2?'big':''}">${pct>0?'▲':'▼'}${Math.abs(pct).toFixed(2)}%</span>`;
-  }, 'commodities');
+  const priceVal = Number(x.price);
+  const priceStr = Number.isFinite(priceVal) ? `$${priceVal.toFixed(2)}` : '—';
+
+  const pctVal  = Number(x.pct);
+  const pctSafe = Number.isFinite(pctVal) ? pctVal : 0;
+  const dir     = pctSafe>=0 ? 'up' : 'down';
+  const arrow   = pctSafe>0 ? '▲' : (pctSafe<0 ? '▼' : '•');
+  const pctStr  = Number.isFinite(pctVal) ? `${arrow}${Math.abs(pctSafe).toFixed(2)}%` : '—';
+
+  return `<span>${x.name}</span>`+
+         `<span class="right">`+
+           `<span class="price-muted">${priceStr}</span>`+
+           `<span class="tpct ${dir} ${Math.abs(pctSafe)>=2?'big':''}">${pctStr}</span>`+
+         `</span>`;
+}, 'commodities');
+
   mk(d.conflicts, x=>`<span>${x.name}</span><small>${x.note||''}</small>`, 'conflicts');
   mk(d.apparel, x=>`<span>${x.brand}</span><small>${x.note||''}</small>`, 'apparel');
 }
