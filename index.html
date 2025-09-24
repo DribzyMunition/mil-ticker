@@ -260,28 +260,44 @@ function renderTicker(d){
 
 
 function renderLists(d){
-  const mk=(arr,map,id)=>{const ul=document.getElementById(id); ul.innerHTML=''; (arr||[]).forEach(x=>{const li=document.createElement('li'); li.innerHTML=map(x); ul.appendChild(li);});};
+  const mk=(arr,map,id)=>{
+    const ul=document.getElementById(id);
+    ul.innerHTML='';
+    (arr||[]).forEach(x=>{
+      const li=document.createElement('li');
+      li.innerHTML=map(x);
+      ul.appendChild(li);
+    });
+  };
+
+  // Contracts
   mk(d.contracts, x=>`<span>${x.entity}</span><span>${money(x.value_usd)}</span>`, 'contracts');
+
+  // Commodities — PRICE (muted) + PERCENT (hero)
   mk(d.commodities, x=>{
-  const priceVal = Number(x.price);
-  const priceStr = Number.isFinite(priceVal) ? `$${priceVal.toFixed(2)}` : '—';
+    const priceVal = Number(x.price);
+    const priceStr = Number.isFinite(priceVal) ? `$${priceVal.toFixed(2)}` : '—';
 
-  const pctVal  = Number(x.pct);
-  const pctSafe = Number.isFinite(pctVal) ? pctVal : 0;
-  const dir     = pctSafe>=0 ? 'up' : 'down';
-  const arrow   = pctSafe>0 ? '▲' : (pctSafe<0 ? '▼' : '•');
-  const pctStr  = Number.isFinite(pctVal) ? `${arrow}${Math.abs(pctSafe).toFixed(2)}%` : '—';
+    const pctVal  = Number(x.pct);
+    const pctSafe = Number.isFinite(pctVal) ? pctVal : 0;
+    const dir     = pctSafe>=0 ? 'up' : 'down';
+    const arrow   = pctSafe>0 ? '▲' : (pctSafe<0 ? '▼' : '•');
+    const pctStr  = Number.isFinite(pctVal) ? `${arrow}${Math.abs(pctSafe).toFixed(2)}%` : '—';
 
-  return `<span>${x.name}</span>`+
-         `<span class="right">`+
-           `<span class="price-muted">${priceStr}</span>`+
-           `<span class="tpct ${dir} ${Math.abs(pctSafe)>=2?'big':''}">${pctStr}</span>`+
-         `</span>`;
-}, 'commodities');
+    return `<span>${x.name}</span>`+
+           `<span class="right">`+
+             `<span class="price-muted">${priceStr}</span>`+
+             `<span class="tpct ${dir} ${Math.abs(pctSafe)>=2?'big':''}">${pctStr}</span>`+
+           `</span>`;
+  }, 'commodities');
 
+  // Conflicts
   mk(d.conflicts, x=>`<span>${x.name}</span><small>${x.note||''}</small>`, 'conflicts');
+
+  // Apparel
   mk(d.apparel, x=>`<span>${x.brand}</span><small>${x.note||''}</small>`, 'apparel');
 }
+
 
 document.addEventListener('DOMContentLoaded', load);
 setInterval(load, 60000);
