@@ -209,6 +209,9 @@ async function load(){
 
     document.getElementById('updated').textContent =
       'Last updated: ' + fmtTime(data.generated_at || Date.now()/1000);
+   document.getElementById('sources').textContent =
+  ' • Sources: Oil via IG (fallback: Yahoo); Steel via TE/Yahoo; Contracts via DoD RSS';
+
 
     renderTicker(data);
     renderLists(data);
