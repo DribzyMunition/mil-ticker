@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
 """
 MIL-Ticker data builder
-- Live: WTI/Brent (yfinance), HRC Steel via TradingEconomics (if TE_KEY set)
-- Live: DoD daily contract awards (defense.gov RSS)
-- Manual: apparel + conflict notes
+- Oil: WTI/Brent via yfinance
+- Steel: TradingEconomics (if TE_KEY set) OR Yahoo Finance futures (HRC=F) fallback
+- Metals: Copper (HG=F), Aluminum (ALI=F) via yfinance (with safe fallbacks)
+- DoD contracts: official RSS (best-effort parse)
+- Tier 2 lists: manual
 - Output: public/data.json
 """
 import json, time, os, re, pathlib
 
+# ---------- helpers ----------
 def r2(x):
     try: return float(f"{float(x):.2f}")
     except: return None
@@ -19,60 +22,80 @@ def pct(curr, prev):
     except:
         return 0.0
 
-# --- Oil via yfinance ---
-def fetch_oil():
+def yahoo_last_two(symbol):
+    """Return (last, prev) closes for a Yahoo ticker or (None, None)."""
     try:
         import yfinance as yf
-        tickers = yf.Tickers("CL=F BZ=F")
-        out = []
-        for sym, name in [("CL=F", "WTI"), ("BZ=F", "Brent")]:
-            t = tickers.tickers[sym]
-            hist = t.history(period="5d", interval="1d")
-            if hist is None or hist.empty: 
-                continue
-            closes = hist["Close"].dropna().tail(2).tolist()
-            price = r2(closes[-1])
-            prev  = r2(closes[-2]) if len(closes) > 1 else price
-            out.append({"name": name, "price": price, "pct": pct(price, prev)})
-        return out
+        t = yf.Ticker(symbol)
+        hist = t.history(period="5d", interval="1d")
+        if hist is None or hist.empty:
+            return None, None
+        closes = hist["Close"].dropna().tail(2).tolist()
+        if not closes: return None, None
+        last = r2(closes[-1])
+        prev = r2(closes[-2]) if len(closes) > 1 else last
+        return last, prev
     except Exception:
-        # graceful fallback so site never breaks
-        return [
+        return None, None
+
+# ---------- oil via yfinance ----------
+def fetch_oil():
+    out = []
+    for sym, name in [("CL=F", "WTI"), ("BZ=F", "Brent")]:
+        last, prev = yahoo_last_two(sym)
+        if last is not None:
+            out.append({"name": name, "price": last, "pct": pct(last, prev)})
+    # Safety net if Yahoo was unavailable
+    if not out:
+        out = [
             {"name": "WTI", "price": 83.12, "pct": 0.0},
             {"name": "Brent", "price": 86.47, "pct": 0.0},
         ]
+    return out
 
-# --- HRC Steel via TradingEconomics (optional) ---
-def fetch_hrc_te():
-    """
-    Requires repo secret TE_KEY (TradingEconomics API key).
-    If absent, returns None and we use a manual fallback.
-    """
+# ---------- steel via TradingEconomics OR Yahoo ----------
+def fetch_hrc():
+    # 1) Try TradingEconomics if TE_KEY present
     key = os.getenv("TE_KEY")
-    if not key:
-        return None
-    import requests
-    url = f"https://api.tradingeconomics.com/markets/commodities?c={key}&f=json"
-    r = requests.get(url, timeout=20)
-    r.raise_for_status()
-    data = r.json()
-    for row in data:
-        name = (row.get("Name") or "").lower()
-        if "hrc" in name and "steel" in name:
-            last = row.get("Last")
-            chg  = row.get("DailyPercentualChange")
-            if last is None: 
-                continue
-            return {"name": "HRC Steel", "price": r2(last), "pct": r2(chg or 0)}
-    return None
+    if key:
+        try:
+            import requests
+            url = f"https://api.tradingeconomics.com/markets/commodities?c={key}&f=json"
+            r = requests.get(url, timeout=20)
+            r.raise_for_status()
+            for row in r.json():
+                name = (row.get("Name") or "").lower()
+                if "hrc" in name and "steel" in name:
+                    last = row.get("Last")
+                    chg  = row.get("DailyPercentualChange") or 0
+                    if last is not None:
+                        return {"name": "HRC Steel", "price": r2(last), "pct": r2(chg)}
+        except Exception:
+            pass
+    # 2) Try Yahoo Finance futures (US Midwest HRC)
+    last, prev = yahoo_last_two("HRC=F")
+    if last is not None:
+        return {"name": "HRC Steel", "price": last, "pct": pct(last, prev)}
+    # 3) Fallback manual
+    return {"name": "HRC Steel", "price": 830.00, "pct": 0.9}
 
-# --- DoD Contracts via RSS ---
+# ---------- metals via Yahoo with fallback ----------
+def fetch_metal(symbol, name, fallback_price, fallback_pct):
+    last, prev = yahoo_last_two(symbol)
+    if last is not None:
+        return {"name": name, "price": last, "pct": pct(last, prev)}
+    return {"name": name, "price": fallback_price, "pct": fallback_pct}
+
+# ---------- DoD Contracts via RSS ----------
 def fetch_dod_contracts(limit=6):
     """
-    Official DoD contracts RSS: vendor names + amounts appear in the summary.
-    We regex approximate 'X was awarded $NNN (million|billion)'. Best-effort.
+    Official DoD contracts RSS: best-effort vendor + $ scrape from summary.
+    If the pattern isn't present, you still get whatever entries matched.
     """
-    import feedparser
+    try:
+        import feedparser
+    except Exception:
+        return []
     feed_url = "https://www.defense.gov/DesktopModules/ArticleCS/RSS.ashx?ContentType=400&Site=727&max=10"
     d = feedparser.parse(feed_url)
     contracts = []
@@ -88,35 +111,25 @@ def fetch_dod_contracts(limit=6):
             entity = m.group(1).strip()
             amt = float(m.group(2).replace(",", ""))
             scale = (m.group(3) or "").lower()
-            if scale == "billion":
-                value = int(amt * 1_000_000_000)
-            elif scale == "million":
-                value = int(amt * 1_000_000)
-            else:
-                value = int(amt)
+            if scale == "billion": value = int(amt * 1_000_000_000)
+            elif scale == "million": value = int(amt * 1_000_000)
+            else: value = int(amt)
             contracts.append({"entity": entity, "value_usd": value, "note": "DoD daily awards"})
             if len(contracts) >= limit:
                 return contracts
     return contracts
 
 def main():
-    # Commodities
-    commodities = fetch_oil()
-    try:
-        hrc = fetch_hrc_te()
-    except Exception:
-        hrc = None
-    if hrc:
-        commodities.append(hrc)
-    else:
-        commodities.append({"name": "HRC Steel", "price": 830.00, "pct": 0.9})
-    # Optional static metals for context
-    commodities += [
-        {"name": "Copper", "price": 4.12, "pct": -1.8},
-        {"name": "Aluminum", "price": 2421.00, "pct": 0.7}
-    ]
+    # Commodities (live where possible)
+    commodities = []
+    commodities.extend(fetch_oil())
+    commodities.append(fetch_hrc())
+    # Copper (HG=F), Aluminum (ALI=F) with safe fallbacks
+    commodities.append(fetch_metal("HG=F",  "Copper",   4.12,  -1.8))
+    commodities.append(fetch_metal("ALI=F", "Aluminum", 2421,   0.7))
 
-    # Contracts: live + a couple of anchors
+    # Contracts: live RSS + a couple of anchors
+    live = []
     try:
         live = fetch_dod_contracts(limit=6)
     except Exception:
@@ -126,6 +139,7 @@ def main():
         {"entity": "Raytheon",        "value_usd": 220_000_000, "note": "Patriot spares IDIQ (placeholder)"},
     ]
 
+    # Tier 1: conflicts (manual notes for now)
     conflicts = [
         {"name": "Black Sea",    "note": "Drone strike uptick"},
         {"name": "Red Sea",      "note": "Shipping insurance premia rising"},
@@ -133,6 +147,7 @@ def main():
         {"name": "Sahel",        "note": "Cross-border operations reported"},
     ]
 
+    # Tier 2: apparel
     apparel = [
         {"brand": "Arc'teryx (LEAF)", "note": "Technical shells, load-bearing apparel"},
         {"brand": "The North Face",   "note": "Extreme cold-weather lines; expedition wear"},
