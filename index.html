@@ -216,7 +216,7 @@ function renderTicker(d){
   const el = document.getElementById('ticker');
   const parts = [];
 
-  // Commodities: sort by absolute % move (robust to missing/NaN)
+  // Commodities: sort by absolute % move (robust)
   [...(d.commodities || [])]
     .sort((a,b)=>(Math.abs(Number(b.pct)||0) - Math.abs(Number(a.pct)||0)))
     .forEach(c=>{
@@ -231,7 +231,7 @@ function renderTicker(d){
 
       parts.push(
         `<span class="titem"><span class="tname">${c.name}</span>`+
-        `<span>${pstr}</span>`+
+        `<span class="price-muted">${pstr}</span>`+
         `<span class="tpct ${dir} ${Math.abs(pctSafe)>=2?'big':''}">${pctStr}</span></span>`
       );
     });
@@ -249,14 +249,12 @@ function renderTicker(d){
 
   // Conflicts: keep order
   (d.conflicts || []).forEach(cf=>{
-    parts.push(
-      `<span class="titem"><span class="tname">${cf.name}</span><small>${cf.note||''}</small></span>`
-    );
+    parts.push(`<span class="titem"><span class="tname">${cf.name}</span><small>${cf.note||''}</small></span>`);
   });
 
-  // Duplicate for continuous scroll
   el.innerHTML = parts.join('') + parts.join('');
 }
+
 
 
 function renderLists(d){
