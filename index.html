@@ -144,10 +144,6 @@
   }
   #updated{ color: var(--muted); font-size:.9rem }
 
- <div class="tier-divider">
-  <span id="updated"></span>
-  <small id="sources" style="color:var(--muted)"></small>
-</div>
 
 </style>
 </head>
@@ -175,10 +171,12 @@
     <ul id="conflicts"></ul>
   </section>
 
-  <!-- Divider with timestamp (between tiers) -->
-  <div class="tier-divider">
-    <span id="updated"></span>
-  </div>
+<!-- Divider with timestamp & sources (between tiers) -->
+<div class="tier-divider">
+  <span id="updated"></span>
+  <small id="sources" style="color:var(--muted)"></small>
+</div>
+
 
   <!-- Tier 2: extended boxes -->
   <section>
@@ -207,11 +205,15 @@ async function load(){
     if(!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
 
-    document.getElementById('updated').textContent =
-      'Last updated: ' + fmtTime(data.generated_at || Date.now()/1000);
-   document.getElementById('sources').textContent =
-  ' • Sources: Oil via IG (fallback: Yahoo); Steel via TE/Yahoo; Contracts via DoD RSS';
-
+    // Safe timestamp + sources (won't crash if elements are missing)
+    const upd = document.getElementById('updated');
+    if (upd) {
+      upd.textContent = 'Last updated: ' + fmtTime(data.generated_at || Date.now()/1000);
+    }
+    const src = document.getElementById('sources');
+    if (src) {
+      src.textContent = ' • Sources: Oil via IG (fallback: Yahoo); Steel via TE/Yahoo; Contracts via DoD RSS';
+    }
 
     renderTicker(data);
     renderLists(data);
@@ -220,6 +222,7 @@ async function load(){
     showError('Data load failed: ' + err.message);
   }
 }
+
 
 function renderTicker(d){
   const el = document.getElementById('ticker');
