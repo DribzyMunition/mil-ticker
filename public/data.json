@@ -1,29 +1,78 @@
 {
   "commodities": [
-    { "name": "WTI", "price": 83.12, "pct": 1.2 },
-    { "name": "Brent", "price": 86.47, "pct": -0.6 },
-    { "name": "HRC Steel", "price": 830.00, "pct": 0.9 },
-    { "name": "Aluminum", "price": 2421.00, "pct": 0.7 },
-    { "name": "Copper", "price": 4.12, "pct": -1.8 }
+    {
+      "name": "WTI",
+      "price": 83.12,
+      "pct": 0.0
+    },
+    {
+      "name": "Brent",
+      "price": 86.47,
+      "pct": 0.0
+    },
+    {
+      "name": "HRC Steel",
+      "price": 830.0,
+      "pct": 0.9
+    },
+    {
+      "name": "Copper",
+      "price": 4.12,
+      "pct": -1.8
+    },
+    {
+      "name": "Aluminum",
+      "price": 2421,
+      "pct": 0.7
+    }
   ],
   "contracts": [
-    { "entity": "Lockheed Martin", "value_usd": 540000000, "note": "JASSM production lot" },
-    { "entity": "Raytheon", "value_usd": 220000000, "note": "Patriot spares IDIQ" },
-    { "entity": "BAE Systems", "value_usd": 150000000, "note": "Armored vehicle upgrades" },
-    { "entity": "Northrop Grumman", "value_usd": 310000000, "note": "ISR systems support" },
-    { "entity": "General Dynamics", "value_usd": 185000000, "note": "Munitions & components" }
+    {
+      "entity": "Lockheed Martin",
+      "value_usd": 540000000,
+      "note": "JASSM production lot (placeholder)"
+    },
+    {
+      "entity": "Raytheon",
+      "value_usd": 220000000,
+      "note": "Patriot spares IDIQ (placeholder)"
+    }
   ],
   "conflicts": [
-    { "name": "Black Sea", "note": "Drone strike uptick" },
-    { "name": "Red Sea", "note": "Shipping insurance premia rising" },
-    { "name": "Taiwan Strait", "note": "Increased ADIZ incursions" },
-    { "name": "Sahel", "note": "Cross-border operations reported" }
+    {
+      "name": "Black Sea",
+      "note": "Drone strike uptick"
+    },
+    {
+      "name": "Red Sea",
+      "note": "Shipping insurance premia rising"
+    },
+    {
+      "name": "Taiwan Strait",
+      "note": "Increased ADIZ incursions"
+    },
+    {
+      "name": "Sahel",
+      "note": "Cross-border operations reported"
+    }
   ],
   "apparel": [
-    { "brand": "Arc'teryx (LEAF)", "note": "Technical shells, load-bearing apparel" },
-    { "brand": "The North Face", "note": "Extreme cold-weather lines; expedition wear" },
-    { "brand": "Crye Precision", "note": "Combat uniforms & plate carriers" },
-    { "brand": "5.11 Tactical", "note": "Duty apparel & gear" }
+    {
+      "brand": "Arc'teryx (LEAF)",
+      "note": "Technical shells, load-bearing apparel"
+    },
+    {
+      "brand": "The North Face",
+      "note": "Extreme cold-weather lines; expedition wear"
+    },
+    {
+      "brand": "Crye Precision",
+      "note": "Combat uniforms & plate carriers"
+    },
+    {
+      "brand": "5.11 Tactical",
+      "note": "Duty apparel & gear"
+    }
   ],
-  "generated_at": 1737657600
+  "generated_at": 1758688163
 }
