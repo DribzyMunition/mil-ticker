@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
 MIL-Ticker data builder
-- Oil: WTI/Brent via yfinance
-- Steel: TradingEconomics (if TE_KEY set) OR Yahoo Finance futures (HRC=F) fallback
-- Metals: Copper (HG=F), Aluminum (ALI=F) via yfinance (with safe fallbacks)
+- Oil: WTI/Brent via yfinance (robust + fallbacks)
+- Steel: TradingEconomics (if TE_KEY set) OR Yahoo Finance HRC=F fallback, else manual
+- Metals: Copper (HG=F) & Aluminum (ALI=F) via yfinance (with safe fallbacks)
 - DoD contracts: official RSS (best-effort parse)
-- Tier 2 lists: manual
+- Tier 2 (apparel): manual list
 - Output: public/data.json
 """
 import json, time, os, re, pathlib
@@ -29,33 +29,57 @@ def yahoo_last_two(symbol):
         t = yf.Ticker(symbol)
         hist = t.history(period="5d", interval="1d")
         if hist is None or hist.empty:
+            print(f"[YF] {symbol} history empty")
             return None, None
         closes = hist["Close"].dropna().tail(2).tolist()
-        if not closes: return None, None
+        if not closes:
+            print(f"[YF] {symbol} no closes")
+            return None, None
         last = r2(closes[-1])
         prev = r2(closes[-2]) if len(closes) > 1 else last
         return last, prev
-    except Exception:
+    except Exception as e:
+        print(f"[YF] {symbol} error: {e}")
         return None, None
 
-# ---------- oil via yfinance ----------
+# ---------- oil via yfinance (robust) ----------
 def fetch_oil():
+    import yfinance as yf
     out = []
     for sym, name in [("CL=F", "WTI"), ("BZ=F", "Brent")]:
         last, prev = yahoo_last_two(sym)
+
+        # fallback to fast_info/info if history is unavailable
+        if last is None:
+            try:
+                t = yf.Ticker(sym)
+                fast = getattr(t, "fast_info", None)
+                price = None
+                if fast:
+                    price = fast.get("last_price") or fast.get("regular_market_price")
+                if price is None:
+                    info = t.info  # slower, but okay in Actions
+                    price = info.get("regularMarketPrice")
+                if price is not None:
+                    last = r2(price); prev = last
+                    print(f"[OIL] {sym} info fallback price={last}")
+            except Exception as e:
+                print(f"[OIL] {sym} info fallback error: {e}")
+
         if last is not None:
             out.append({"name": name, "price": last, "pct": pct(last, prev)})
-    # Safety net if Yahoo was unavailable
-    if not out:
-        out = [
-            {"name": "WTI", "price": 83.12, "pct": 0.0},
-            {"name": "Brent", "price": 86.47, "pct": 0.0},
-        ]
+
+    # guarantee both commodities exist so the site never breaks
+    names = {x["name"] for x in out}
+    if "WTI" not in names:
+        out.append({"name": "WTI", "price": 83.12, "pct": 0.0})
+    if "Brent" not in names:
+        out.append({"name": "Brent", "price": 86.47, "pct": 0.0})
+
     return out
 
-# ---------- steel via TradingEconomics OR Yahoo ----------
+# ---------- steel via TradingEconomics OR Yahoo OR manual ----------
 def fetch_hrc():
-    # 1) Try TradingEconomics if TE_KEY present
     key = os.getenv("TE_KEY")
     if key:
         try:
@@ -70,16 +94,18 @@ def fetch_hrc():
                     chg  = row.get("DailyPercentualChange") or 0
                     if last is not None:
                         return {"name": "HRC Steel", "price": r2(last), "pct": r2(chg)}
-        except Exception:
-            pass
-    # 2) Try Yahoo Finance futures (US Midwest HRC)
+        except Exception as e:
+            print(f"[TE] HRC fetch error: {e}")
+
+    # Yahoo fallback (US Midwest HRC futures)
     last, prev = yahoo_last_two("HRC=F")
     if last is not None:
         return {"name": "HRC Steel", "price": last, "pct": pct(last, prev)}
-    # 3) Fallback manual
+
+    # Manual fallback
     return {"name": "HRC Steel", "price": 830.00, "pct": 0.9}
 
-# ---------- metals via Yahoo with fallback ----------
+# ---------- generic metal via Yahoo with fallback ----------
 def fetch_metal(symbol, name, fallback_price, fallback_pct):
     last, prev = yahoo_last_two(symbol)
     if last is not None:
@@ -88,13 +114,10 @@ def fetch_metal(symbol, name, fallback_price, fallback_pct):
 
 # ---------- DoD Contracts via RSS ----------
 def fetch_dod_contracts(limit=6):
-    """
-    Official DoD contracts RSS: best-effort vendor + $ scrape from summary.
-    If the pattern isn't present, you still get whatever entries matched.
-    """
     try:
         import feedparser
-    except Exception:
+    except Exception as e:
+        print(f"[RSS] feedparser import error: {e}")
         return []
     feed_url = "https://www.defense.gov/DesktopModules/ArticleCS/RSS.ashx?ContentType=400&Site=727&max=10"
     d = feedparser.parse(feed_url)
@@ -124,22 +147,20 @@ def main():
     commodities = []
     commodities.extend(fetch_oil())
     commodities.append(fetch_hrc())
-    # Copper (HG=F), Aluminum (ALI=F) with safe fallbacks
-    commodities.append(fetch_metal("HG=F",  "Copper",   4.12,  -1.8))
-    commodities.append(fetch_metal("ALI=F", "Aluminum", 2421,   0.7))
+    commodities.append(fetch_metal("HG=F",  "Copper",   4.12, -1.8))
+    commodities.append(fetch_metal("ALI=F", "Aluminum", 2421,  0.7))
 
-    # Contracts: live RSS + a couple of anchors
-    live = []
+    # Contracts: live RSS + placeholders
     try:
         live = fetch_dod_contracts(limit=6)
-    except Exception:
+    except Exception as e:
+        print(f"[RSS] fetch error: {e}")
         live = []
     contracts = (live or []) + [
         {"entity": "Lockheed Martin", "value_usd": 540_000_000, "note": "JASSM production lot (placeholder)"},
         {"entity": "Raytheon",        "value_usd": 220_000_000, "note": "Patriot spares IDIQ (placeholder)"},
     ]
 
-    # Tier 1: conflicts (manual notes for now)
     conflicts = [
         {"name": "Black Sea",    "note": "Drone strike uptick"},
         {"name": "Red Sea",      "note": "Shipping insurance premia rising"},
@@ -147,7 +168,6 @@ def main():
         {"name": "Sahel",        "note": "Cross-border operations reported"},
     ]
 
-    # Tier 2: apparel
     apparel = [
         {"brand": "Arc'teryx (LEAF)", "note": "Technical shells, load-bearing apparel"},
         {"brand": "The North Face",   "note": "Extreme cold-weather lines; expedition wear"},
