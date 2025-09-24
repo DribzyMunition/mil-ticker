@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
 MIL-Ticker data builder
-- Oil: WTI/Brent via yfinance (robust + fallbacks)
-- Steel: TradingEconomics (if TE_KEY set) OR Yahoo Finance HRC=F fallback, else manual
-- Metals: Copper (HG=F) & Aluminum (ALI=F) via yfinance (with safe fallbacks)
+- Oil: WTI/Brent via yfinance (daily close change, robust fallbacks)
+- Steel: TradingEconomics (if TE_KEY) OR Yahoo HRC=F fallback, else manual
+- Metals: Copper (HG=F) & Aluminum (ALI=F) via yfinance (fallback safe)
 - DoD contracts: official RSS (best-effort parse)
 - Tier 2 (apparel): manual list
 - Output: public/data.json
@@ -22,60 +22,65 @@ def pct(curr, prev):
     except:
         return 0.0
 
-def yahoo_last_two(symbol):
-    """Return (last, prev) closes for a Yahoo ticker or (None, None)."""
+# ---------- Yahoo helpers ----------
+def yahoo_last_two_closes(symbol):
+    """Return (last_close, prev_close) using daily candles or (None, None)."""
     try:
         import yfinance as yf
         t = yf.Ticker(symbol)
-        hist = t.history(period="5d", interval="1d")
+        # Pull up to 10 days to survive holidays/weekends
+        hist = t.history(period="10d", interval="1d", auto_adjust=False)
         if hist is None or hist.empty:
-            print(f"[YF] {symbol} history empty")
+            print(f"[YF] {symbol} daily history empty")
             return None, None
-        closes = hist["Close"].dropna().tail(2).tolist()
-        if not closes:
-            print(f"[YF] {symbol} no closes")
+        closes = [float(x) for x in hist["Close"].dropna().tolist()]
+        if len(closes) < 2:
+            print(f"[YF] {symbol} not enough closes")
             return None, None
-        last = r2(closes[-1])
-        prev = r2(closes[-2]) if len(closes) > 1 else last
-        return last, prev
+        return r2(closes[-1]), r2(closes[-2])
     except Exception as e:
-        print(f"[YF] {symbol} error: {e}")
+        print(f"[YF] {symbol} closes error: {e}")
         return None, None
 
-# ---------- oil via yfinance (robust) ----------
+def yahoo_live_price_and_prev(symbol):
+    """Return (live_price, prev_close) via fast_info/info or (None, None)."""
+    try:
+        import yfinance as yf
+        t = yf.Ticker(symbol)
+        price = prev = None
+        fast = getattr(t, "fast_info", None)
+        if fast:
+            price = fast.get("last_price") or fast.get("regular_market_price")
+            prev  = fast.get("previous_close") or fast.get("previousClose") or prev
+        if price is None or prev is None:
+            info = t.info  # slower; ok in Actions
+            price = price or info.get("regularMarketPrice")
+            prev  = prev  or info.get("regularMarketPreviousClose")
+        return r2(price), r2(prev)
+    except Exception as e:
+        print(f"[YF] {symbol} info error: {e}")
+        return None, None
+
+# ---------- oil via yfinance (prefer daily close change) ----------
 def fetch_oil():
-    import yfinance as yf
     out = []
     for sym, name in [("CL=F", "WTI"), ("BZ=F", "Brent")]:
-        last, prev = yahoo_last_two(sym)
+        price, prev = yahoo_last_two_closes(sym)   # day-on-day close change
+        if price is None or prev is None:
+            # fallback to live price vs prev close (intraday)
+            price, prev = yahoo_live_price_and_prev(sym)
+        if price is not None and prev is not None:
+            out.append({"name": name, "price": price, "pct": pct(price, prev)})
+        else:
+            print(f"[OIL] {sym} fell back to placeholder")
+            # final safety net
+            out.append({"name": name, "price": 0.0, "pct": 0.0})
 
-        # fallback to fast_info/info if history is unavailable
-        if last is None:
-            try:
-                t = yf.Ticker(sym)
-                fast = getattr(t, "fast_info", None)
-                price = None
-                if fast:
-                    price = fast.get("last_price") or fast.get("regular_market_price")
-                if price is None:
-                    info = t.info  # slower, but okay in Actions
-                    price = info.get("regularMarketPrice")
-                if price is not None:
-                    last = r2(price); prev = last
-                    print(f"[OIL] {sym} info fallback price={last}")
-            except Exception as e:
-                print(f"[OIL] {sym} info fallback error: {e}")
-
-        if last is not None:
-            out.append({"name": name, "price": last, "pct": pct(last, prev)})
-
-    # guarantee both commodities exist so the site never breaks
-    names = {x["name"] for x in out}
-    if "WTI" not in names:
-        out.append({"name": "WTI", "price": 83.12, "pct": 0.0})
-    if "Brent" not in names:
-        out.append({"name": "Brent", "price": 86.47, "pct": 0.0})
-
+    # Ensure both exist & nonzero price if we had to placeholder
+    for x in out:
+        if not isinstance(x["price"], (int, float)) or x["price"] == 0.0:
+            if x["name"] == "WTI": x["price"] = 83.12
+            if x["name"] == "Brent": x["price"] = 86.47
     return out
 
 # ---------- steel via TradingEconomics OR Yahoo OR manual ----------
@@ -98,8 +103,10 @@ def fetch_hrc():
             print(f"[TE] HRC fetch error: {e}")
 
     # Yahoo fallback (US Midwest HRC futures)
-    last, prev = yahoo_last_two("HRC=F")
-    if last is not None:
+    last, prev = yahoo_last_two_closes("HRC=F")
+    if last is None or prev is None:
+        last, prev = yahoo_live_price_and_prev("HRC=F")
+    if last is not None and prev is not None:
         return {"name": "HRC Steel", "price": last, "pct": pct(last, prev)}
 
     # Manual fallback
@@ -107,8 +114,10 @@ def fetch_hrc():
 
 # ---------- generic metal via Yahoo with fallback ----------
 def fetch_metal(symbol, name, fallback_price, fallback_pct):
-    last, prev = yahoo_last_two(symbol)
-    if last is not None:
+    last, prev = yahoo_last_two_closes(symbol)
+    if last is None or prev is None:
+        last, prev = yahoo_live_price_and_prev(symbol)
+    if last is not None and prev is not None:
         return {"name": name, "price": last, "pct": pct(last, prev)}
     return {"name": name, "price": fallback_price, "pct": fallback_pct}
 
