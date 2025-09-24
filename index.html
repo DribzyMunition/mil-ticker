@@ -209,23 +209,31 @@ async function load(){
 }
 
 function renderTicker(d){
-  const el = document.getElementById('ticker'); 
+  const el = document.getElementById('ticker');
   const parts = [];
 
-  // Commodities: sort by absolute % move
-  [...(d.commodities||[])]
-    .sort((a,b)=>Math.abs(b.pct)-Math.abs(a.pct))
+  // Commodities: sort by absolute % move (robust to missing/NaN)
+  [...(d.commodities || [])]
+    .sort((a,b)=>(Math.abs(Number(b.pct)||0) - Math.abs(Number(a.pct)||0)))
     .forEach(c=>{
-      const dir = (Number(c.pct)||0) >= 0 ? 'up' : 'down';
+      const pctVal  = Number(c.pct);
+      const pctSafe = Number.isFinite(pctVal) ? pctVal : 0;
+      const dir     = pctSafe >= 0 ? 'up' : 'down';
+      const arrow   = pctSafe > 0 ? '▲' : (pctSafe < 0 ? '▼' : '•');
+
+      const priceVal = Number(c.price);
+      const pstr     = Number.isFinite(priceVal) ? `$${priceVal.toFixed(2)}` : '—';
+      const pctStr   = Number.isFinite(pctVal) ? `${arrow}${Math.abs(pctSafe).toFixed(2)}%` : '—';
+
       parts.push(
         `<span class="titem"><span class="tname">${c.name}</span>`+
-        `<span>$${Number(c.price).toFixed(2)}</span>`+
-        `<span class="tpct ${dir} ${Math.abs(c.pct)>=2?'big':''}">${c.pct>0?'▲':'▼'}${Math.abs(c.pct).toFixed(2)}%</span>`
+        `<span>${pstr}</span>`+
+        `<span class="tpct ${dir} ${Math.abs(pctSafe)>=2?'big':''}">${pctStr}</span></span>`
       );
     });
 
   // Contracts: sort by descending value
-  [...(d.contracts||[])]
+  [...(d.contracts || [])]
     .sort((a,b)=>b.value_usd - a.value_usd)
     .forEach(ct=>{
       parts.push(
@@ -235,12 +243,15 @@ function renderTicker(d){
       );
     });
 
-  // Conflicts: leave order
-  (d.conflicts||[]).forEach(cf=>{
-    parts.push(`<span class="titem"><span class="tname">${cf.name}</span><small>${cf.note||''}</small></span>`);
+  // Conflicts: keep order
+  (d.conflicts || []).forEach(cf=>{
+    parts.push(
+      `<span class="titem"><span class="tname">${cf.name}</span><small>${cf.note||''}</small></span>`
+    );
   });
 
-  el.innerHTML = parts.join('') + parts.join(''); // duplicate for continuous scroll
+  // Duplicate for continuous scroll
+  el.innerHTML = parts.join('') + parts.join('');
 }
 
 
