@@ -1,0 +1,43 @@
+name: Update data.json
+
+on:
+  schedule:
+    - cron: "13 * * * *"     # every hour at :13
+  workflow_dispatch:          # allow manual run
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Build data.json
+        env:
+          TE_KEY: ${{ secrets.TE_KEY }}   # optional; if empty, HRC falls back to manual
+        run: |
+          python scripts/fetch.py
+
+      - name: Commit & push if changed
+        run: |
+          git add public/data.json
+          if git diff --cached --quiet; then
+            echo "No changes."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git commit -m "chore: auto-update data.json"
+            git push
+          fi
